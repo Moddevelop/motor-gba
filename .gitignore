@@ -1,0 +1,11 @@
+# Local build output
+build/
+*.o
+*.elf
+*.gba
+*.apk
+
+# Test binaries and scratch files
+core_test
+core_test_san
+cpp_check.cpp

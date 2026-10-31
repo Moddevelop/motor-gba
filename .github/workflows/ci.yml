@@ -1,0 +1,35 @@
+name: CI
+
+# Builds and tests the engine core on every push.
+# (The GBA ROM and the Android APK get their own workflows later.)
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  core-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and run the core tests (strict warnings)
+        run: |
+          gcc -std=c99 -Wall -Wextra -Wpedantic -Wshadow -Werror -I. \
+            tests/core_test.c core/engine.c core/log.c core/objects.c core/render.c \
+            -o core_test
+          ./core_test
+
+      - name: Run the tests with AddressSanitizer and UBSan
+        run: |
+          gcc -std=c99 -O1 -g -fsanitize=address,undefined -fno-sanitize-recover=all -I. \
+            tests/core_test.c core/engine.c core/log.c core/objects.c core/render.c \
+            -o core_test_san
+          ./core_test_san
+
+      - name: Check that the core headers compile as C++
+        run: |
+          printf '#include "core/engine.h"\n#include "core/log.h"\n#include "core/objects.h"\n#include "core/render.h"\nint main() { return 0; }\n' > cpp_check.cpp
+          g++ -std=c++17 -Wall -Wextra -Werror -I. -c cpp_check.cpp -o /dev/null
